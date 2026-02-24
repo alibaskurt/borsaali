@@ -3,11 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <title>BorsaAli</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 body {background:#0f172a;color:white;font-family:Arial;text-align:center}
 .card {background:#1e293b;margin:20px;padding:20px;border-radius:15px}
-canvas {background:#0b1220;border-radius:10px}
 </style>
 </head>
 <body>
@@ -15,85 +13,65 @@ canvas {background:#0b1220;border-radius:10px}
 <h1>BorsaAli</h1>
 
 <div class="card">
-<h2>Altın</h2>
-<p id="goldPrice">Yükleniyor...</p>
-<p id="goldTR"></p>
-<p id="goldProb"></p>
-<canvas id="goldChart"></canvas>
+<h2>Altın Ons (XAUUSD)</h2>
+<div class="tradingview-widget-container">
+<div id="gold_chart"></div>
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+new TradingView.widget({
+"width": "100%",
+"height": 400,
+"symbol": "OANDA:XAUUSD",
+"interval": "5",
+"timezone": "Europe/Istanbul",
+"theme": "dark",
+"style": "1",
+"locale": "tr",
+"container_id": "gold_chart"
+});
+</script>
+</div>
 </div>
 
 <div class="card">
-<h2>Gümüş</h2>
-<p id="silverPrice">Yükleniyor...</p>
-<p id="silverProb"></p>
-<canvas id="silverChart"></canvas>
+<h2>Gümüş Ons (XAGUSD)</h2>
+<div class="tradingview-widget-container">
+<div id="silver_chart"></div>
+<script>
+new TradingView.widget({
+"width": "100%",
+"height": 400,
+"symbol": "OANDA:XAGUSD",
+"interval": "5",
+"timezone": "Europe/Istanbul",
+"theme": "dark",
+"style": "1",
+"locale": "tr",
+"container_id": "silver_chart"
+});
+</script>
+</div>
 </div>
 
+<div class="card">
+<h2>USDTRY</h2>
+<div class="tradingview-widget-container">
+<div id="usd_chart"></div>
 <script>
-const apiKey = "goldapi-z6lx8smm16unfs-io";
-let goldData=[], silverData=[];
-let labels=[];
-
-const goldChart = new Chart(document.getElementById("goldChart"), {
-type:"line",
-data:{labels:labels,datasets:[{label:"XAUUSD",data:goldData,borderColor:"gold"}]},
-options:{responsive:true}
+new TradingView.widget({
+"width": "100%",
+"height": 400,
+"symbol": "FX:USDTRY",
+"interval": "5",
+"timezone": "Europe/Istanbul",
+"theme": "dark",
+"style": "1",
+"locale": "tr",
+"container_id": "usd_chart"
 });
-
-const silverChart = new Chart(document.getElementById("silverChart"), {
-type:"line",
-data:{labels:labels,datasets:[{label:"XAGUSD",data:silverData,borderColor:"silver"}]},
-options:{responsive:true}
-});
-
-async function fetchData(symbol){
-const res = await fetch(`https://www.goldapi.io/api/${symbol}/USD`,{
-headers:{"x-access-token":apiKey}
-});
-return await res.json();
-}
-
-async function update(){
-try{
-const gold = await fetchData("XAU");
-const silver = await fetchData("XAG");
-const usdtryRes = await fetch("https://api.exchangerate.host/latest?base=USD&symbols=TRY");
-const usdtry = await usdtryRes.json();
-const rate = usdtry.rates.TRY;
-
-const time = new Date().toLocaleTimeString();
-labels.push(time);
-
-goldData.push(gold.price);
-silverData.push(silver.price);
-
-if(labels.length>20){
-labels.shift(); goldData.shift(); silverData.shift();
-}
-
-goldChart.update();
-silverChart.update();
-
-document.getElementById("goldPrice").innerText = "Ons: $"+gold.price;
-document.getElementById("silverPrice").innerText = "Ons: $"+silver.price;
-
-const gramAltin = (gold.price*rate)/31.10;
-document.getElementById("goldTR").innerText = "TR Gram: "+gramAltin.toFixed(2)+" TL";
-
-const goldProb = ((goldData[goldData.length-1] - goldData[0]) / goldData[0]) * 100;
-const silverProb = ((silverData[silverData.length-1] - silverData[0]) / silverData[0]) * 100;
-
-document.getElementById("goldProb").innerText = "Olası Yön %: "+goldProb.toFixed(2);
-document.getElementById("silverProb").innerText = "Olası Yön %: "+silverProb.toFixed(2);
-
-}catch(e){
-console.log("Hata:",e);
-}
-}
-
-update();
-setInterval(update,10000);
 </script>
+</div>
+</div>
 
 </body>
 </html>
