@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BorsaAli</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: Arial; margin:0; background:#0f172a; color:white; }
+h1 { text-align:center; padding:15px; }
+.card {
+    background:#1e293b;
+    margin:15px;
+    padding:15px;
+    border-radius:12px;
+}
+.value { font-size:20px; font-weight:bold; }
+.green { color:#22c55e; }
+.red { color:#ef4444; }
+canvas { background:#111827; border-radius:10px; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<h1>BorsaAli</h1>
+
+<div class="card">
+<h2>🟡 Altın</h2>
+<div id="goldData"></div>
+<canvas id="goldChart"></canvas>
+</div>
+
+<div class="card">
+<h2>⚪ Gümüş</h2>
+<div id="silverData"></div>
+<canvas id="silverChart"></canvas>
+</div>
+
+<script>
+
+const API_KEY = "F86P1DF134OKUXCH";
+
+async function fetchData(symbol) {
+    const url = `https://www.alphavantage.co/query?function=FX_INTRADAY&from_symbol=${symbol}&to_symbol=USD&interval=5min&apikey=${API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data["Time Series FX (5min)"];
+}
+
+function calculateProbability(prices) {
+    let last = prices[0];
+    let prev = prices[1];
+    let change = ((last - prev) / prev) * 100;
+
+    let upProb = 50 + change * 5;
+    if (upProb > 90) upProb = 90;
+    if (upProb < 10) upProb = 10;
+
+    let downProb = 100 - upProb;
+
+    let targetUp = last * 1.01;
+    let targetDown = last * 0.99;
+
+    return {
+        upProb: upProb.toFixed(1),
+        downProb: downProb.toFixed(1),
+        targetUp: targetUp.toFixed(2),
+        targetDown: targetDown.toFixed(2)
+    };
+}
+
+async function loadGold() {
+    let data = await fetchData("XAU");
+    let times = Object.keys(data).slice(0,20);
+    let prices = times.map(t => parseFloat(data[t]["4. close"]));
+
+    let prob = calculateProbability(prices);
+
+    document.getElementById("goldData").innerHTML = `
+    <div class="value">Ons: ${prices[0]} $</div>
+    <div class="green">Yukarı Olasılık: %${prob.upProb} 🎯 ${prob.targetUp}$</div>
+    <div class="red">Aşağı Olasılık: %${prob.downProb} 🎯 ${prob.targetDown}$</div>
+    `;
+
+    new Chart(document.getElementById("goldChart"), {
+        type: 'line',
+        data: {
+            labels: times.reverse(),
+            datasets: [{
+                data: prices.reverse(),
+                borderColor: '#facc15'
+            }]
+        }
+    });
+}
+
+async function loadSilver() {
+    let data = await fetchData("XAG");
+    let times = Object.keys(data).slice(0,20);
+    let prices = times.map(t => parseFloat(data[t]["4. close"]));
+
+    let prob = calculateProbability(prices);
+
+    document.getElementById("silverData").innerHTML = `
+    <div class="value">Ons: ${prices[0]} $</div>
+    <div class="green">Yukarı Olasılık: %${prob.upProb} 🎯 ${prob.targetUp}$</div>
+    <div class="red">Aşağı Olasılık: %${prob.downProb} 🎯 ${prob.targetDown}$</div>
+    `;
+
+    new Chart(document.getElementById("silverChart"), {
+        type: 'line',
+        data: {
+            labels: times.reverse(),
+            datasets: [{
+                data: prices.reverse(),
+                borderColor: '#cbd5e1'
+            }]
+        }
+    });
+}
+
+loadGold();
+loadSilver();
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js');
+}
+
+</script>
+
+</body>
+</html>
